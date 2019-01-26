@@ -5,24 +5,39 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+# Microsoft API Key and Link
+headers = {"Ocp-Apim-Subscription-Key": 'a4cf185c040f41b19857e365d17f0c9e'}
+text_analytics_sentiment_url = "https://southcentralus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment"
 
-key = 'a0d59b09-5c25-4cfd-8524-5eeeae4c4dfe'
-
+# Reading Data
 data = pd.read_csv('./slacklogo.csv')
-df = pd.DataFrame.from_dict(data)
-print df.head()
+df = pd.DataFrame.from_dict(data.head(n=2))
 
-# from aylienapiclient import textapi
-# c = textapi.Client("f7464471", "dc1e243efba93d8019bc989a6f7a3277")
-text_analytics_sentiment_url = "https://westcentralus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment"
+# Extracting time and tweet
+documents = {"documents": []}
+for idx, row in df.iterrows():
+    documents["documents"].append({
+        "id": str(idx + 1),
+        "text": row["tweet_text"],
+        "time": row["timestamp"]
+    })
+
+df1 = pd.DataFrame(documents["documents"])
+
+# Processing data
+response = requests.post(text_analytics_sentiment_url,
+                         headers=headers, json=documents)
+sentiments = response.json()
+
+sentiment_df = pd.DataFrame([d["score"] for d in sentiments["documents"]], index=[d["id"] for d in sentiments["documents"]],
+                            columns=["sentiment_score"])
+sentiment_df["sentiment_percentage"] = sentiment_df.sentiment_score * 2 - 1
+
+for column in sentiment_df:
+    df1[column] = sentiment_df[column]
 
 
-# date_rng = pd.date_range(start='1/16/2010', end='1/26/2018', freq='H')
-# print date_rng
+print df1
 
-time = data['timestamp'].values
-tweets = data['tweet_text'].values
-# tweets_sentiment = map(c.Sentiment, tweets)
-
-# print tweets_sentiment
-# print time
+# time = data['timestamp'].values
+# tweets = data['tweet_text'].values
