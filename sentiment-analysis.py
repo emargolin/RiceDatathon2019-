@@ -32,12 +32,9 @@ sentiments = response.json()
 sentiment_df = pd.DataFrame([d["score"] for d in sentiments["documents"]], index=[d["id"] for d in sentiments["documents"]],
                             columns=["sentiment_score"])
 sentiment_df["sentiment_percentage"] = sentiment_df.sentiment_score * 2 - 1
-
-for column in sentiment_df:
-    df1[column] = sentiment_df[column]
-
-
-print df1
+result = pd.concat([df1.reset_index(drop=True),
+                    sentiment_df.reset_index(drop=True)], axis=1)
+print result
 
 # time = data['timestamp'].values
 # tweets = data['tweet_text'].values
